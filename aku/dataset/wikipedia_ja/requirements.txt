@@ -1,0 +1,2 @@
+datasets==2.21.0
+neologdn==0.5.2
