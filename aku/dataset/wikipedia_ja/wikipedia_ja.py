@@ -7,7 +7,6 @@ from textformatting import ssplit
 
 def create_raw_data(file_path):
     dataset = load_dataset("wikimedia/wikipedia", data_files="20231101.ja/train-*-of-00015.parquet")
-    print(f"Dataset size: {len(dataset)}")
 
     contents = []
     for i in range(len(dataset['train'])):
