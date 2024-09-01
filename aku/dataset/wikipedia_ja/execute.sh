@@ -3,6 +3,6 @@ cd python-textformatting
 python setup.py install
 cd ..
 
-pip install -r requirements.txt
+pip install -r requirements/requirements_dataset.txt
 
-python wikipedia_ja.py
+python aku/dataset/wikipedia_ja/wikipedia_ja.py

@@ -1,5 +1,7 @@
 # refer:https://github.com/ce-lery/japanese-mistral-300m-recipe/tree/main/pretrain/dataset
 
+import os
+
 from datasets import load_dataset
 import neologdn
 from textformatting import ssplit
@@ -14,12 +16,12 @@ def create_raw_data(file_path):
         if "脚注" in text: # 脚注セクション以降は削除
             contents.append(text[:text.index("脚注")])
 
-    with open(file_path, 'w') as f:
+    with open(os.path.join("data/raw", file_path), 'w') as f:
         for item in contents:
             f.write(item + '\n')
 
 def process_text(file_path):
-    with open(file_path, 'r') as f:
+    with open(os.path.join("data/raw", file_path), 'r') as f:
         lines = f.readlines()
 
     processed_lines = []
@@ -32,7 +34,7 @@ def process_text(file_path):
             sentences = ssplit(line)
             processed_lines.extend(sentences)
 
-    with open(file_path, 'w') as f:
+    with open(os.path.join("data/processed", file_path), 'w') as f:
         for sentence in processed_lines:
             f.write(sentence + '\n')
 
