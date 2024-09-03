@@ -10,8 +10,8 @@ ds_valid = load_dataset("huggingface-course/codeparrot-ds-valid", split="validat
 
 raw_datasets = DatasetDict(
     {
-        "train": ds_train,  # .shuffle().select(range(50000)),
-        "valid": ds_valid,  # .shuffle().select(range(500))
+        "train": ds_train.shuffle().select(range(500)),
+        "valid": ds_valid.shuffle().select(range(5))
     }
 )
 
