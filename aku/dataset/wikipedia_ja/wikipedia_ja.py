@@ -1,4 +1,4 @@
-# refer:https://github.com/ce-lery/japanese-mistral-300m-recipe/tree/main/pretrain/dataset
+# refer: https://github.com/ce-lery/japanese-mistral-300m-recipe/tree/main/pretrain/dataset
 
 import os
 

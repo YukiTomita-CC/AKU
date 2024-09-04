@@ -4,25 +4,13 @@ import os
 from tqdm import tqdm
 import neologdn
 
+from aku.dataset.common.alphabet_iterator import AlphabetIterator
 from aku.dataset.common.output_check import has_lines_no_start_with_role
 from aku.dataset.common.prompt_formatter import format_prompt
 
 
-class AlphabetIterator:
-    def __init__(self):
-        self.current = ord('A') # ASCII code of 'A'
-    
-    def next(self):
-        letter = chr(self.current)
-        self.current += 1
-        
-        if self.current > ord('Z'):
-            self.current = ord('A')
-        
-        return letter
-
 def main():
-    # Download from https://github.com/megagonlabs/asdc
+    # Download from https://github.com/ku-nlp/JMRD
     target_directory = "data/raw/JMRD/data"
 
     json_files = []
@@ -35,18 +23,19 @@ def main():
     contents = []
     for json_file in tqdm(json_files):
         with open(json_file, 'r', encoding='utf-8') as f:
-            conversation = []
-
             data = json.load(f)
-            for dialogs in tqdm(data):
+            for dialog in tqdm(data):
+                conversation = []
                 alphabet = alphabet_iterator.next()
-                for d in dialogs["dialog"]:
+                for d in dialog["dialog"]:
                     conversation.append({
                         "role": f"推薦者{alphabet}" if d["speaker"] == "recommender" else f"質問者{alphabet}",
                         "content": neologdn.normalize(d["text"].replace("\n", ""))
                     })
         
-                contents.append(format_prompt(conversation))
+                # Skip 2 turn conversation because it is like "Hello" and "Nice to meet you"
+                # Remove the last turn because it is like "Thank you" and "Thank you too"
+                contents.append(format_prompt(conversation[4:-2]))
 
     with open('data/processed/JMRD.txt', 'w', encoding="utf-8") as f:
         f.writelines(contents)
