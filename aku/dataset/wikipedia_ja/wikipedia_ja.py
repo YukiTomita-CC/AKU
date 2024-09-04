@@ -13,7 +13,7 @@ def create_raw_data(file_path):
     contents = []
     for i in range(len(dataset['train'])):
         text = dataset['train'][i]['text']
-        if "脚注" in text: # 脚注セクション以降は削除
+        if "脚注" in text: # Remove after the footnote section
             contents.append(text[:text.index("脚注")])
 
     with open(os.path.join("data/raw", file_path), 'w') as f:

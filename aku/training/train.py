@@ -58,11 +58,6 @@ tokenizer.pad_token = tokenizer.eos_token
 ## DataCollator
 data_collator = DataCollatorForLanguageModeling(tokenizer, mlm=False)
 
-out = data_collator([tokenized_datasets["train"][i] for i in range(5)])
-for key in out:
-    print(f"{key} shape: {out[key].shape}")
-
-
 ### Training Args
 args = TrainingArguments(
     output_dir="codeparrot-ds",
