@@ -1,47 +1,38 @@
 # refer: https://github.com/ce-lery/japanese-mistral-300m-recipe/tree/main/pretrain/dataset
 
-import os
-
 from datasets import load_dataset
 import neologdn
 from textformatting import ssplit
+from tqdm import tqdm
 
 
-def create_raw_data(file_path):
+def main():
     dataset = load_dataset("wikimedia/wikipedia", data_files="20231101.ja/train-*-of-00015.parquet")
 
+    print("INFO: processing phase1")
     contents = []
-    for i in range(len(dataset['train'])):
+    for i in tqdm(range(len(dataset['train']))):
         text = dataset['train'][i]['text']
         if "脚注" in text: # Remove after the footnote section
             contents.append(text[:text.index("脚注")])
+        else:
+            contents.append(text)
 
-    with open(os.path.join("data/raw", file_path), 'w') as f:
-        for item in contents:
-            f.write(item + '\n')
-
-def process_text(file_path):
-    with open(os.path.join("data/raw", file_path), 'r') as f:
-        lines = f.readlines()
-
+    print("INFO: processing phase2")
     processed_lines = []
-    for line in lines:
+    for line in tqdm(contents):
         line = line.replace('\u3000', ' ').replace('\t', ' ').strip()
         line = ' '.join(line.split())
 
-        if line and len(line) >= 20:
-            line = neologdn.normalize(line)
-            sentences = ssplit(line)
-            processed_lines.extend(sentences)
+        line = neologdn.normalize(line)
+        sentences = ssplit(line)
 
-    with open(os.path.join("data/processed", file_path), 'w') as f:
+        processed_lines.extend(sentences)
+
+    with open("data/processed/wikipedia_ja.txt", 'w', encoding='utf-8') as f:
         for sentence in processed_lines:
             f.write(sentence + '\n')
 
 
 if __name__ == "__main__":
-    wiki_file = "wikipedia_ja.txt"
-
-    create_raw_data(wiki_file)
-
-    process_text(wiki_file)
+    main()
