@@ -2,8 +2,6 @@ from collections import OrderedDict
 from itertools import chain
 import json
 import math
-import os
-import sys
 
 import evaluate
 from datasets import load_dataset
@@ -12,7 +10,6 @@ from transformers import (
     AutoTokenizer,
     MistralConfig,
     MistralForCausalLM,
-    DataCollatorForLanguageModeling,
     Trainer,
     TrainingArguments,
     default_data_collator,
@@ -20,13 +17,13 @@ from transformers import (
 )
 
 
-train_file = "../dataset/train.txt"
-validation_file = "../dataset/test.txt"
-tokenizer_name = "../tokenizer/spm_tokenizer_neologdn_bytefallback_nofast"
+train_file = "data/train/train.txt"
+validation_file = "data/train/test.txt"
+tokenizer_name = "data/train/tokenizer"
 
 def main():
     parser = HfArgumentParser((TrainingArguments))
-    training_args = parser.parse_json_file(json_file=os.path.abspath(sys.argv[1]))
+    training_args = parser.parse_json_file(json_file="training_config.json")
 
     set_seed(training_args.seed)
 
@@ -43,7 +40,9 @@ def main():
     column_names = list(raw_datasets["train"].features)
 
     def tokenize_function(examples):
-        return tokenizer(examples["text"])
+        replace_text = examples["text"].replace("__BR__", "\n")
+
+        return tokenizer(replace_text)
 
     with training_args.main_process_first(desc="dataset map tokenization"):
         tokenized_datasets = raw_datasets.map(
@@ -84,7 +83,7 @@ def main():
             config = MistralConfig.from_dict(config)
         return config
 
-    config = load_config_from_json(config_file = "config.json")
+    config = load_config_from_json(config_file = "mistral_0_5b_config.json")
 
     model = MistralForCausalLM.from_pretrained(
         pretrained_model_name_or_path=None, 
@@ -93,12 +92,8 @@ def main():
         use_flash_attention_2=True
         )
 
-
-    # Preprocessing the logits for evaluation and metrics
     def preprocess_logits_for_metrics(logits, labels):
         if isinstance(logits, tuple):
-            # Depending on the model and config, logits may contain extra tensors,
-            # like past_key_values, but logits always come first
             logits = logits[0]
         return logits.argmax(dim=-1)
 
@@ -106,13 +101,9 @@ def main():
 
     def compute_metrics(eval_preds):
         preds, labels = eval_preds
-        # preds have the same shape as the labels, after the argmax(-1) has been calculated
-        # by preprocess_logits_for_metrics but we need to shift the labels
         labels = labels[:, 1:].reshape(-1)
         preds = preds[:, :-1].reshape(-1)
         return metric.compute(predictions=preds, references=labels)
-    
-    data_collator = DataCollatorForLanguageModeling(tokenizer, mlm=False)
 
     # Initialize Trainer
     trainer = Trainer(
@@ -121,7 +112,6 @@ def main():
         train_dataset=train_dataset,
         eval_dataset=eval_dataset,
         tokenizer=tokenizer,
-        # Data collator will default to DataCollatorWithPadding, so we change it.
         data_collator=default_data_collator,
         compute_metrics=compute_metrics,
         preprocess_logits_for_metrics=preprocess_logits_for_metrics,

@@ -4,11 +4,10 @@ import sentencepiece as spm
 from transformers import T5Tokenizer
 
 
-MODEL_PREFIX = "sentencepiece_model"
+MODEL_PREFIX = "sentencepice_model"
 OUTPUT_DIR = "output/custom_tokenizer"
 
-if not os.path.exists(OUTPUT_DIR):
-    os.makedirs(OUTPUT_DIR)
+os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 spm.SentencePieceTrainer.train(
     input="corpus.txt",
@@ -16,8 +15,8 @@ spm.SentencePieceTrainer.train(
     model_prefix=MODEL_PREFIX,
     vocab_size=32000,
     accept_language=["ja", "en"],
-    caracter_coverage=0.9995,
-    user_defined_symbols=["<CONTEXT>","</CONTEXT>","<ROLE>","</ROLE>"],
+    character_coverage=0.9995,
+    user_defined_symbols=["<CONTEXT>","</CONTEXT>","<ROLE>","</ROLE>", "User", "Aku", "😊", "🥰", "😉", "🤗", "😭", "🤣", "🥺", "💓", "✨"],
     byte_fallback=True,
     add_dummy_prefix=False,
     unk_id=3,
@@ -27,8 +26,7 @@ spm.SentencePieceTrainer.train(
     unk_piece="<UNK>",
     bos_piece="<BOS>",
     eos_piece="<EOS>",
-    pad_piece="<PAD>",
-    random_seed=42
+    pad_piece="<PAD>"
     )
 
 tokenizer = T5Tokenizer(
@@ -37,7 +35,8 @@ tokenizer = T5Tokenizer(
     bos_token="<BOS>",
     eos_token="<EOS>",
     pad_token="<PAD>",
-    extra_ids=4
+    extra_ids=0,
+    legacy=False
 )
 
 tokenizer.save_pretrained(OUTPUT_DIR)
