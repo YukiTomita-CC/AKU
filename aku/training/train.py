@@ -6,9 +6,10 @@ import os
 
 from datasets import load_dataset
 import evaluate
+import torch
 from transformers import (
     HfArgumentParser,
-    AutoTokenizer,
+    T5Tokenizer,
     MistralConfig,
     MistralForCausalLM,
     Trainer,
@@ -55,6 +56,7 @@ def main():
     validation_file = "aku/training/prepare/processed_data/test.txt"
     tokenizer_name = "aku/training/prepare/tokenizer"
 
+    print("[INFO] Parsing training arguments...")
     parser = HfArgumentParser((TrainingArguments))
     training_args = parser.parse_json_file(json_file="aku/training/config/training_config.json")[0]
 
@@ -62,15 +64,19 @@ def main():
 
 
     # Dataset
+    print("[INFO] Loading dataset...")
     data_files = {"train": train_file, "validation": validation_file}
-
+    
     raw_datasets = load_dataset(
         "text",
         data_files=data_files,
     )
+
+    print("[INFO] Preprocessing dataset... (Replacing '__BR__' with '\\n')")
     raw_datasets = raw_datasets.map(lambda examples: {"text": examples["text"].replace("__BR__", "\n")})
 
-    tokenizer = AutoTokenizer.from_pretrained(tokenizer_name)
+    print("[INFO] Tokenizing dataset...")
+    tokenizer = T5Tokenizer.from_pretrained(tokenizer_name)
 
     column_names = list(raw_datasets["train"].features)
 
@@ -84,6 +90,7 @@ def main():
             remove_columns=column_names
         )
 
+    print("[INFO] Grouping dataset...")
     def group_texts(examples):
         block_size = 1024
 
@@ -108,22 +115,23 @@ def main():
     train_dataset = lm_datasets["train"]
     eval_dataset = lm_datasets["validation"]
 
-    print(f"Train dataset length: {len(train_dataset)}")
-    print(f"Eval dataset length: {len(eval_dataset)}")
+    # print(f"Train dataset length: {len(train_dataset)}")
+    # print(f"Eval dataset length: {len(eval_dataset)}")
 
-    print("Train dataset example:")
-    for i in range(5):
-        print(train_dataset["input_ids"][i])
-        print(tokenizer.decode(train_dataset["input_ids"][i]))
+    # print("Train dataset example:")
+    # for i in range(5):
+    #     print(train_dataset["input_ids"][i])
+    #     print(tokenizer.decode(train_dataset["input_ids"][i]))
     
-    print("Eval dataset example:")
-    for i in range(5):
-        print(eval_dataset["input_ids"][i])
-        print(tokenizer.decode(eval_dataset["input_ids"][i]))
+    # print("Eval dataset example:")
+    # for i in range(5):
+    #     print(eval_dataset["input_ids"][i])
+    #     print(tokenizer.decode(eval_dataset["input_ids"][i]))
 
-    input("Did the dataset look correct? Press Enter to continue...")
+    # input("Did the dataset look correct? Press Enter to continue...")
 
     # Model
+    print("[INFO] Initializing model...")
     def load_config_from_json(config_file):
         with open(config_file, 'r') as f:
             config = json.load(f)
@@ -136,7 +144,8 @@ def main():
         pretrained_model_name_or_path=None, 
         config=config, 
         state_dict=OrderedDict(),
-        use_flash_attention_2=True
+        attn_implementation="flash_attention_2",
+        torch_dtype=torch.float16
         )
 
     def preprocess_logits_for_metrics(logits, labels):
@@ -144,6 +153,7 @@ def main():
             logits = logits[0]
         return logits.argmax(dim=-1)
 
+    print("[INFO] Loading metric...")
     metric = evaluate.load("accuracy")
 
     def compute_metrics(eval_preds):
@@ -154,6 +164,7 @@ def main():
 
 
     # Initialize Trainer
+    print("[INFO] Initializing Trainer...")
     trainer = Trainer(
         model=model,
         args=training_args,
@@ -167,6 +178,7 @@ def main():
 
 
     # Training
+    print("[INFO] Strat training...")
     train_result = trainer.train()
     trainer.save_model()
 
@@ -179,6 +191,7 @@ def main():
     trainer.save_state()
 
     # Evaluation
+    print("[INFO] Start evaluation...")
     metrics = trainer.evaluate()
 
     metrics["eval_samples"] = len(eval_dataset)

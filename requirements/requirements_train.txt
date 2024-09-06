@@ -5,5 +5,6 @@ sentencepiece==0.2.0
 protobuf
 evaluate
 scikit-learn
-deepspeed==0.12.3
+deepspeed==0.14.4
 wheel==0.42.0
+bitsandbytes
