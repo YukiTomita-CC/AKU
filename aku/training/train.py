@@ -35,10 +35,10 @@ def prepare_training():
     if not raw_files:
         raise RuntimeError("No raw data found. Please download it from HuggingFace.")
 
-    # required_processed_files = ["train.txt", "test.txt"]
-    # for file in required_processed_files:
-    #     if not os.path.exists(os.path.join(processed_data_dir, file)):
-    #         raise RuntimeError("Processed data not found. Please run 'create_corpus.sh'.")
+    required_processed_files = ["train.txt", "test.txt"]
+    for file in required_processed_files:
+        if not os.path.exists(os.path.join(processed_data_dir, file)):
+            raise RuntimeError("Processed data not found. Please run 'create_corpus.sh'.")
 
     required_tokenizer_files = ["special_tokens_map.json", "spiece.model", "tokenizer_config.json"]
     for file in required_tokenizer_files:
@@ -68,15 +68,14 @@ def main():
         "text",
         data_files=data_files,
     )
+    raw_datasets = raw_datasets.map(lambda examples: {"text": examples["text"].replace("__BR__", "\n")})
 
     tokenizer = AutoTokenizer.from_pretrained(tokenizer_name)
 
     column_names = list(raw_datasets["train"].features)
 
     def tokenize_function(examples):
-        replace_text = examples["text"].replace("__BR__", "\n")
-
-        return tokenizer(replace_text)
+        return tokenizer(examples["text"])
 
     with training_args.main_process_first(desc="dataset map tokenization"):
         tokenized_datasets = raw_datasets.map(
