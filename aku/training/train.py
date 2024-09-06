@@ -1,93 +1,197 @@
-from transformers import AutoTokenizer, GPT2LMHeadModel, AutoConfig
-from transformers import DataCollatorForLanguageModeling
-from transformers import Trainer, TrainingArguments
-from datasets import load_dataset, DatasetDict
+from collections import OrderedDict
+from itertools import chain
+import json
+import math
+import os
 
-
-### Dataset
-ds_train = load_dataset("huggingface-course/codeparrot-ds-train", split="train")
-ds_valid = load_dataset("huggingface-course/codeparrot-ds-valid", split="validation")
-
-raw_datasets = DatasetDict(
-    {
-        "train": ds_train.shuffle().select(range(500)),
-        "valid": ds_valid.shuffle().select(range(5))
-    }
+from datasets import load_dataset
+import evaluate
+from transformers import (
+    HfArgumentParser,
+    AutoTokenizer,
+    MistralConfig,
+    MistralForCausalLM,
+    Trainer,
+    TrainingArguments,
+    default_data_collator,
+    set_seed,
 )
 
-context_length = 128
 
-### Tokenizer
-tokenizer = AutoTokenizer.from_pretrained("huggingface-course/code-search-net-tokenizer")
+def prepare_training():
+    if os.path.basename(os.getcwd()) != "AKU":
+        raise RuntimeError("This script must be executed in the 'AKU' directory. (project root)")
+
+    prepare_dir = "aku/training/prepare"
+    raw_data_dir = os.path.join(prepare_dir, "raw_data")
+    processed_data_dir = os.path.join(prepare_dir, "processed_data")
+    tokenizer_dir = os.path.join(prepare_dir, "tokenizer")
+    
+    os.makedirs(raw_data_dir, exist_ok=True)
+    os.makedirs(processed_data_dir, exist_ok=True)
+    os.makedirs(tokenizer_dir, exist_ok=True)
+
+    raw_files = [f for f in os.listdir(raw_data_dir) if os.path.isfile(os.path.join(raw_data_dir, f))]
+    if not raw_files:
+        raise RuntimeError("No raw data found. Please download it from HuggingFace.")
+
+    required_processed_files = ["train.txt", "test.txt"]
+    for file in required_processed_files:
+        if not os.path.exists(os.path.join(processed_data_dir, file)):
+            raise RuntimeError("Processed data not found. Please run 'create_corpus.sh'.")
+
+    required_tokenizer_files = ["special_tokens_map.json", "spiece.model", "tokenizer_config.json"]
+    for file in required_tokenizer_files:
+        if not os.path.exists(os.path.join(tokenizer_dir, file)):
+            raise RuntimeError("Tokenizer not found. Please download it from HuggingFace.")
+    
+    print("All checks passed. The environment is ready for training.")
 
 
-### Tokenize Dataset
-def tokenize(element):
-    outputs = tokenizer(
-        element["content"],
-        truncation=True,
-        max_length=context_length,
-        return_overflowing_tokens=True,
-        return_length=True,
+def main():
+    prepare_training()
+
+    train_file = "aku/training/prepare/processed_data/train.txt"
+    validation_file = "aku/training/prepare/processed_data/test.txt"
+    tokenizer_name = "aku/training/prepare/tokenizer"
+
+    parser = HfArgumentParser((TrainingArguments))
+    training_args = parser.parse_json_file(json_file="aku/training/config/training_config.json")
+
+    set_seed(training_args.seed)
+
+
+    # Dataset
+    data_files = {"train": train_file, "validation": validation_file}
+
+    raw_datasets = load_dataset(
+        "text",
+        data_files=data_files,
     )
-    input_batch = []
-    for length, input_ids in zip(outputs["length"], outputs["input_ids"]):
-        if length == context_length:
-            input_batch.append(input_ids)
-    return {"input_ids": input_batch}
 
-tokenized_datasets = raw_datasets.map(
-    tokenize, batched=True, remove_columns=raw_datasets["train"].column_names
-)
+    tokenizer = AutoTokenizer.from_pretrained(tokenizer_name)
+
+    column_names = list(raw_datasets["train"].features)
+
+    def tokenize_function(examples):
+        replace_text = examples["text"].replace("__BR__", "\n")
+
+        return tokenizer(replace_text)
+
+    with training_args.main_process_first(desc="dataset map tokenization"):
+        tokenized_datasets = raw_datasets.map(
+            tokenize_function,
+            batched=True,
+            remove_columns=column_names
+        )
+
+    def group_texts(examples):
+        block_size = 1024
+
+        concatenated_examples = {k: list(chain(*examples[k])) for k in examples.keys()}
+        total_length = len(concatenated_examples[list(examples.keys())[0]])
+
+        total_length = (total_length // block_size) * block_size
+
+        result = {
+            k: [t[i : i + block_size] for i in range(0, total_length, block_size)]
+            for k, t in concatenated_examples.items()
+        }
+        result["labels"] = result["input_ids"].copy()
+        return result
+
+    with training_args.main_process_first(desc="grouping texts together"):
+        lm_datasets = tokenized_datasets.map(
+            group_texts,
+            batched=True
+        )
+
+    train_dataset = lm_datasets["train"]
+    eval_dataset = lm_datasets["validation"]
+
+    print(f"Train dataset length: {len(train_dataset)}")
+    print(f"Eval dataset length: {len(eval_dataset)}")
+
+    print("Train dataset example:")
+    for i in range(5):
+        print(train_dataset["input_ids"][i])
+        print(tokenizer.decode(train_dataset["input_ids"][i]))
+    
+    print("Eval dataset example:")
+    for i in range(5):
+        print(eval_dataset["input_ids"][i])
+        print(tokenizer.decode(eval_dataset["input_ids"][i]))
+
+    input("Did the dataset look correct? Press Enter to continue...")
+
+    # Model
+    def load_config_from_json(config_file):
+        with open(config_file, 'r') as f:
+            config = json.load(f)
+            config = MistralConfig.from_dict(config)
+        return config
+
+    config = load_config_from_json(config_file = "aku/training/config/mistral_0_5b_config.json")
+
+    model = MistralForCausalLM.from_pretrained(
+        pretrained_model_name_or_path=None, 
+        config=config, 
+        state_dict=OrderedDict(),
+        use_flash_attention_2=True
+        )
+
+    def preprocess_logits_for_metrics(logits, labels):
+        if isinstance(logits, tuple):
+            logits = logits[0]
+        return logits.argmax(dim=-1)
+
+    metric = evaluate.load("accuracy")
+
+    def compute_metrics(eval_preds):
+        preds, labels = eval_preds
+        labels = labels[:, 1:].reshape(-1)
+        preds = preds[:, :-1].reshape(-1)
+        return metric.compute(predictions=preds, references=labels)
 
 
-### Model Config Setting
-config = AutoConfig.from_pretrained(
-    "gpt2",
-    vocab_size=len(tokenizer),
-    n_ctx=context_length,
-    bos_token_id=tokenizer.bos_token_id,
-    eos_token_id=tokenizer.eos_token_id,
-)
-
-model = GPT2LMHeadModel(config)
-
-tokenizer.pad_token = tokenizer.eos_token
-
-
-## DataCollator
-data_collator = DataCollatorForLanguageModeling(tokenizer, mlm=False)
-
-### Training Args
-args = TrainingArguments(
-    output_dir="codeparrot-ds",
-    per_device_train_batch_size=32,
-    per_device_eval_batch_size=32,
-    evaluation_strategy="steps",
-    eval_steps=5_000,
-    logging_steps=5_000,
-    gradient_accumulation_steps=8,
-    num_train_epochs=1,
-    weight_decay=0.1,
-    warmup_steps=1_000,
-    lr_scheduler_type="cosine",
-    learning_rate=5e-4,
-    save_steps=5_000,
-    fp16=True,
-    push_to_hub=True,
-)
+    # Initialize Trainer
+    trainer = Trainer(
+        model=model,
+        args=training_args,
+        train_dataset=train_dataset,
+        eval_dataset=eval_dataset,
+        tokenizer=tokenizer,
+        data_collator=default_data_collator,
+        compute_metrics=compute_metrics,
+        preprocess_logits_for_metrics=preprocess_logits_for_metrics,
+    )
 
 
-### Trainer
-trainer = Trainer(
-    model=model,
-    tokenizer=tokenizer,
-    args=args,
-    data_collator=data_collator,
-    train_dataset=tokenized_datasets["train"],
-    eval_dataset=tokenized_datasets["valid"],
-)
+    # Training
+    train_result = trainer.train()
+    trainer.save_model()
+
+    metrics = train_result.metrics
+
+    metrics["train_samples"] = len(train_dataset)
+
+    trainer.log_metrics("train", metrics)
+    trainer.save_metrics("train", metrics)
+    trainer.save_state()
+
+    # Evaluation
+    metrics = trainer.evaluate()
+
+    metrics["eval_samples"] = len(eval_dataset)
+    try:
+        perplexity = math.exp(metrics["eval_loss"])
+    except OverflowError:
+        perplexity = float("inf")
+    metrics["perplexity"] = perplexity
+
+    trainer.log_metrics("eval", metrics)
+    trainer.save_metrics("eval", metrics)
 
 
-### Train
-trainer.train()
+if __name__ == "__main__":
+    main()

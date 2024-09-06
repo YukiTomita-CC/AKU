@@ -1,3 +1,8 @@
-transformers>=4.42.1
+transformers==4.42.1
 datasets>=2.14.0
-evaluate==0.4.2
+accelerate>=0.12.0
+sentencepiece==0.2.0
+protobuf
+evaluate
+scikit-learn
+deepspeed==0.12.3
