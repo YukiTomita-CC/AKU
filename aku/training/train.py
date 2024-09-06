@@ -35,10 +35,10 @@ def prepare_training():
     if not raw_files:
         raise RuntimeError("No raw data found. Please download it from HuggingFace.")
 
-    required_processed_files = ["train.txt", "test.txt"]
-    for file in required_processed_files:
-        if not os.path.exists(os.path.join(processed_data_dir, file)):
-            raise RuntimeError("Processed data not found. Please run 'create_corpus.sh'.")
+    # required_processed_files = ["train.txt", "test.txt"]
+    # for file in required_processed_files:
+    #     if not os.path.exists(os.path.join(processed_data_dir, file)):
+    #         raise RuntimeError("Processed data not found. Please run 'create_corpus.sh'.")
 
     required_tokenizer_files = ["special_tokens_map.json", "spiece.model", "tokenizer_config.json"]
     for file in required_tokenizer_files:
@@ -56,7 +56,7 @@ def main():
     tokenizer_name = "aku/training/prepare/tokenizer"
 
     parser = HfArgumentParser((TrainingArguments))
-    training_args = parser.parse_json_file(json_file="aku/training/config/training_config.json")
+    training_args = parser.parse_json_file(json_file="aku/training/config/training_config.json")[0]
 
     set_seed(training_args.seed)
 
