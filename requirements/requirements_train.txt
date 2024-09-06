@@ -6,3 +6,4 @@ protobuf
 evaluate
 scikit-learn
 deepspeed==0.12.3
+wheel==0.42.0

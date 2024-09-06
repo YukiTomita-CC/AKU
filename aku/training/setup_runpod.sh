@@ -45,6 +45,9 @@ pyenv global 3.11.6
 git clone https://github.com/YukiTomita-CC/AKU.git
 cd AKU || exit
 
+python -m venv --prompt . .venv
+source .venv/bin/activate
+
 pip install torch torchvision torchaudio
 pip install -r requirements/requirements_train.txt
 pip install flash-attn==2.3.4 --no-build-isolation
