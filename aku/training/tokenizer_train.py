@@ -16,7 +16,7 @@ spm.SentencePieceTrainer.train(
     vocab_size=32000,
     accept_language=["ja", "en"],
     character_coverage=0.9995,
-    user_defined_symbols=["<CONTEXT>","</CONTEXT>","<ROLE>","</ROLE>", "User", "Aku", "😊", "🥰", "😉", "🤗", "😭", "🤣", "🥺", "💓", "✨"],
+    user_defined_symbols=["<CONTEXT>","</CONTEXT>","<ROLE>","</ROLE>", "\n", "User", "Aku", "😊", "🥰", "😉", "🤗", "😭", "🤣", "🥺", "💓", "✨"],
     byte_fallback=True,
     add_dummy_prefix=False,
     unk_id=3,
