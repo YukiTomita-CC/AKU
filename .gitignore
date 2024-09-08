@@ -162,3 +162,5 @@ cython_debug/
 #.idea/
 
 data/
+aku/dataset/original/persona/
+aku/dataset/original/conversations
