@@ -163,3 +163,5 @@ cython_debug/
 
 data/
 aku/training/prepare
+aku/dataset/original/persona/
+aku/dataset/original/conversations
