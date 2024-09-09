@@ -1,20 +1,8 @@
 #!/bin/bash
 
-if [ ! -d "aku" ]; then
-  echo "This script must be run from the AKU directory."
-  exit 1
-fi
-
-mkdir -p "aku/training/prepare/processed_data"
-
-DIR_PATH="aku/training/prepare/raw_data"
-train_file="aku/training/prepare/processed_data/train.txt"
-test_file="aku/training/prepare/processed_data/test.txt"
-
-if [ -f "$train_file" ] && [ -f "$test_file" ]; then
-  echo "train.txt and test.txt already exist. Processing has been completed."
-  exit 0
-fi
+DIR_PATH="aku/training/dataset/raw"
+train_file="aku/training/dataset/train.txt"
+test_file="aku/training/dataset/test.txt"
 
 > "$train_file"
 > "$test_file"
