@@ -28,7 +28,7 @@ pip install wandb
 wandb login
 export WANDB_PROJECT=AKU-d_ms-0_5B-v0_1
 
-huggingface-cli download YukiTomita-CC/AKU-d_ms-0.5B-v0.1_dataset --include "*.txt" --exclude "wikipedia_ja.txt" --repo-type dataset --local-dir aku/training/prepare/raw_data
+huggingface-cli download YukiTomita-CC/AKU-d_ms-0.5B-v0.1_dataset --include "*.txt" --repo-type dataset --local-dir aku/training/prepare/raw_data
 huggingface-cli download YukiTomita-CC/AKU-d_ms_tokenizer --local-dir aku/training/prepare/tokenizer
 
 bash aku/training/create_corpus.sh
