@@ -24,7 +24,7 @@
     "logging_strategy": "steps",
     "logging_steps": 100,
     "save_strategy": "steps",
-    "save_steps": 5000,
+    "save_steps": 1000,
     "save_total_limit": 10,
     "seed": 42,
     "fp16": true,

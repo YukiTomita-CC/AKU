@@ -5,27 +5,17 @@
 
 **AKU** という名前は、モデルが獲得した知識を、デバイスや環境を問わず至る所で使用してほしいという思いを込めました。
 
-## environment
-python==3.11.6
-
-## 1. AKU-d_ms-0.5B-v0.1
+## 1. AKU-d_ms-0.5B-chat-v0.1
 ### Overview
-|                    |                                                                   |
-| ------------------ | ----------------------------------------------------------------- |
-| Architecture       | Decoder-Only Transformer                                          |
-| Type               | Mistral                                                           |
-| Parameter          | 0.5B                                                              |
-| Language           | ja                                                                |
-| Training Data      | Wikipedia<br>mC4<br>CC100<br>OSCAR<br>StarCoder<br>Synthetic Data |
-| Training Data Size | -- B tokens                                                       |
-
-### Description
-- Decoder-Onlyの基盤モデルです。
-- 2024/10/12に公開予定です。
-
-## 2. AKU-d_ms-0.5B-chat-v0.1
-### Overview
-[AKU-d_ms-0.5B-v0.1](#1-aku-d_ms-05b-v01)を対話システムのためにファインチューニングしたモデルです。
+|                    |                                                                                                   |
+| ------------------ | ------------------------------------------------------------------------------------------------- |
+| Architecture       | Decoder-Only Transformer                                                                          |
+| Type               | Mistral                                                                                           |
+| Parameter          | 519M                                                                                              |
+| Language           | ja                                                                                                |
+| Training Data      | See [Hugging Face repo](https://huggingface.co/datasets/YukiTomita-CC/AKU-d_ms-0.5B-v0.1_dataset) |
+| Training Data Size | 1.56 B tokens                                                                                     |
 
 ### Description
 - 2024/10/12に公開予定です。
+- 会話(雑談)タスクに特化させたモデルです。

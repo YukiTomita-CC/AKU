@@ -176,6 +176,11 @@ def main():
         preprocess_logits_for_metrics=preprocess_logits_for_metrics,
     )
 
+    # Check
+    if len(tokenizer) > model.get_input_embeddings().weight.shape[0]:
+        raise ValueError(
+            f"Your tokenizer has a vocab size of {len(tokenizer)}, but your model has a vocab size of {model.get_input_embeddings().weight.shape[0]}."
+        )
 
     # Training
     print("[INFO] Strat training...")
