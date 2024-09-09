@@ -5,9 +5,37 @@ from transformers import T5Tokenizer
 
 
 MODEL_PREFIX = "sentencepice_model"
-OUTPUT_DIR = "output/custom_tokenizer"
+OUTPUT_DIR = "output/custom_tokenizer5"
 
 os.makedirs(OUTPUT_DIR, exist_ok=True)
+
+user_defined_symbols = [
+    "<CONTEXT>",
+    "</CONTEXT>",
+    "<ROLE>",
+    "</ROLE>",
+    "User",
+    "Aku",
+    "😊",
+    "🥰",
+    "😉",
+    "🤗",
+    "😭",
+    "🤣",
+    "🥺",
+    "😆",
+    "🙄",
+    "😡",
+    "😲",
+    "😳",
+    "😔",
+    "💓",
+    "✨",
+    "<ATTR>",
+    "</ATTR>",
+    "likability",
+    "mood"
+]
 
 spm.SentencePieceTrainer.train(
     input="corpus.txt",
@@ -16,7 +44,7 @@ spm.SentencePieceTrainer.train(
     vocab_size=32000,
     accept_language=["ja", "en"],
     character_coverage=0.9995,
-    user_defined_symbols=["<CONTEXT>","</CONTEXT>","<ROLE>","</ROLE>", "\n", "User", "Aku", "😊", "🥰", "😉", "🤗", "😭", "🤣", "🥺", "💓", "✨"],
+    user_defined_symbols=user_defined_symbols,
     byte_fallback=True,
     add_dummy_prefix=False,
     unk_id=3,

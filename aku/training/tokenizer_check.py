@@ -1,7 +1,7 @@
 from transformers import T5Tokenizer
 
 
-tokenizer = T5Tokenizer.from_pretrained("aku/training/prepare/tokenizer")
+tokenizer = T5Tokenizer.from_pretrained("output/custom_tokenizer5")
 
 print("INFO: Check the special tokens")
 check_tokens = {
@@ -13,7 +13,7 @@ check_tokens = {
     "context_end_token": "</CONTEXT>",
     "role_begin_token": "<ROLE>",
     "role_end_token": "</ROLE>",
-    "line_break_token": "\\n"
+    "line_break_token": "\n"
 }
 
 print (f"| Token ID | {'Token Name':<19} | {'String':<10} |")
