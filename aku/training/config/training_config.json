@@ -27,7 +27,7 @@
     "save_steps": 1000,
     "save_total_limit": 10,
     "seed": 42,
-    "fp16": true,
+    "bf16": true,
     "eval_steps": 1000,
     "dataloader_num_workers": 8,
     "run_name": "baseline",

@@ -471,7 +471,8 @@ def main():
         model = MistralForCausalLM.from_pretrained(pretrained_model_name_or_path=None, 
                                                     config=config, 
                                                     state_dict=OrderedDict(),
-                                                    use_flash_attention_2=True)
+                                                    use_flash_attention_2=True,
+                                                    torch_dtype=torch.bfloat16)
 
         print("mistral config:",config)
         print("mistral model architecture:",model)
