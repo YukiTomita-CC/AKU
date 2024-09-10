@@ -1,0 +1,37 @@
+cd workspace
+
+apt-get update && apt-get install -y git git-lfs curl wget build-essential zlib1g-dev libncurses5-dev libgdbm-dev libbz2-dev libnss3-dev libsqlite3-dev libssl-dev liblzma-dev libreadline-dev libffi-dev libgl1-mesa-dev locales fish vim nano iputils-ping net-tools software-properties-common fonts-powerline screen
+
+apt-get install -y software-properties-common
+add-apt-repository ppa:deadsnakes/ppa
+apt-get update
+apt-get install -y python3.11 python3.11-venv
+update-alternatives --install /usr/bin/python python /usr/bin/python3.11 130
+update-alternatives --set python /usr/bin/python3.11
+
+git clone https://github.com/YukiTomita-CC/AKU.git
+cd AKU
+
+mkdir -p log
+python -m venv --prompt . .venv
+source .venv/bin/activate
+.venv/bin/python -m pip install --upgrade pip
+
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+# neologdnでエラーが出るためtrainのみならコメントアウトする
+pip install -r requirements/requirements_train.txt
+pip install flash-attn==2.3.4 --no-build-isolation
+
+pip install wandb
+wandb login
+export WANDB_PROJECT=AKU-d_ms-0_5B-v0_1
+
+huggingface-cli download YukiTomita-CC/AKU-d_ms-0.5B-v0.1_dataset --include "*.txt" --repo-type dataset --local-dir aku/training/dataset/raw
+huggingface-cli download YukiTomita-CC/AKU-d_ms_tokenizer --local-dir aku/training/tokenizer/custom
+# txtファイルすべてではない場合(wikipediaのみなど)は編集する必要あり
+bash aku/training/create_corpus.sh
+
+# transformers==4.35.2ではmistralのconfigでsliding_windowをnullにするとエラーが発生するので、352行目と364行目を修正する(最新版では修正済み)
+# 352行目: hasattr(self.config, "sliding_window") is not None -> getattr(self.config, "sliding_window", None) is not None
+# 364行目: hasattr(self.config, "sliding_window") -> getattr(self.config, "sliding_window", None) is not None
+vim .venv/lib/python3.11/site-packages/transformers/models/mistral/modeling_mistral.py
