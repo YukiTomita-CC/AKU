@@ -1,0 +1,16 @@
+1. baseline
+  - model_prameter_size: 519M
+  - モデルはMHA(Multi Head Attention)ではなく、GQA(Grouped Query Attention)を採用
+  - batch_size: 32
+  - learning_rate: 5.0e-5
+  - dataset: wikipedia+会話コーパス
+  - dataset_size: 5GB+1GB
+
+2. curriculum
+  - baselineのdatasetをwikipediaと会話コーパスに分離して、wikipediaで学習完了後、会話コーパスで継続学習を行う
+
+3. inc_batch
+  - baselineのbatch_sizeを64に変更し、learning_rateも1.0e-4に変更
+
+4. not_gqa
+  - baselineのモデルアーキテクチャのGQA(Grouped Query Attention)をMHA(Multi Head Attention)に変更
