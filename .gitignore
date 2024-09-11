@@ -161,10 +161,12 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 
-data/
+data/*
 aku/training/prepare
 aku/dataset/original/persona/
 aku/dataset/original/conversations
 output
 *.model
 *.vocab
+models
+!data/test_set.txt
