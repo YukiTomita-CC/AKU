@@ -65,6 +65,7 @@ def inference(model_name: str, device: str, manual_prompt: str = None) -> None:
             tps = num_tokens / elapsed_time
             
             output = tokenizer.decode(tokens[0])
+            output = output.replace(' ', '\n') # might be unnecessary in the future
 
             print("-" * 10, f"Prompt_{str(i)}", "-" * 10)
             print(f"{prompt} -> {output[len(prompt):]}")

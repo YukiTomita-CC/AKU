@@ -113,6 +113,9 @@ def save_conversation(conversation, context):
     
     st.session_state['messages'] = []
 
+def add_emoji(emoji):
+    pyperclip.copy(emoji)
+
 
 # Session state initialization
 if 'messages' not in st.session_state:
@@ -129,21 +132,30 @@ st.sidebar.markdown(f"#### {st.session_state['context']}")
 st.sidebar.markdown(f"Turns Count: {len(st.session_state['messages']) // 2}")
 
 st.sidebar.markdown("---")
-st.sidebar.button("😊", on_click=lambda: pyperclip.copy("😊"), use_container_width=True)
-st.sidebar.button("🥰", on_click=lambda: pyperclip.copy("🥰"), use_container_width=True)
-st.sidebar.button("😉", on_click=lambda: pyperclip.copy("😉"), use_container_width=True)
-st.sidebar.button("🤗", on_click=lambda: pyperclip.copy("🤗"), use_container_width=True)
-st.sidebar.button("😭", on_click=lambda: pyperclip.copy("😭"), use_container_width=True)
-st.sidebar.button("🤣", on_click=lambda: pyperclip.copy("🤣"), use_container_width=True)
-st.sidebar.button("🥺", on_click=lambda: pyperclip.copy("🥺"), use_container_width=True)
-st.sidebar.button("💓", on_click=lambda: pyperclip.copy("💓"), use_container_width=True)
-st.sidebar.button("✨", on_click=lambda: pyperclip.copy("✨"), use_container_width=True)
+st.sidebar.button("😊", on_click=add_emoji, args="😊", use_container_width=True)
+st.sidebar.button("🥰", on_click=add_emoji, args="🥰", use_container_width=True)
+st.sidebar.button("😉", on_click=add_emoji, args="😉", use_container_width=True)
+st.sidebar.button("🤗", on_click=add_emoji, args="🤗", use_container_width=True)
+st.sidebar.button("😭", on_click=add_emoji, args="😭", use_container_width=True)
+st.sidebar.button("🤣", on_click=add_emoji, args="🤣", use_container_width=True)
+st.sidebar.button("😲", on_click=add_emoji, args="😲", use_container_width=True)
+st.sidebar.button("😳", on_click=add_emoji, args="😳", use_container_width=True)
+st.sidebar.button("🥺", on_click=add_emoji, args="🥺", use_container_width=True)
+st.sidebar.button("💓", on_click=add_emoji, args="💓", use_container_width=True)
+st.sidebar.button("✨", on_click=add_emoji, args="✨", use_container_width=True)
+st.sidebar.button("😆", on_click=add_emoji, args="😆", use_container_width=True)
+st.sidebar.button("🙄", on_click=add_emoji, args="🙄", use_container_width=True)
+st.sidebar.button("😡", on_click=add_emoji, args="😡", use_container_width=True)
+st.sidebar.button("😔", on_click=add_emoji, args="😔", use_container_width=True)
 
 for i, message in enumerate(st.session_state['messages']):
     if i % 2 == 0:
         avatar = None
     else:
-        avatar = "aku/dataset/original/persona/assistant_icon.png"
+        if os.path.exists("aku/dataset/original/persona/assistant_icon.png"):
+            avatar = "aku/dataset/original/persona/assistant_icon.png"
+        else:
+            avatar = None
 
     with st.chat_message(message["role"], avatar=avatar):
         st.markdown(message["content"])
