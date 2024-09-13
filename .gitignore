@@ -170,3 +170,4 @@ output
 *.vocab
 models
 !data/test_set.txt
+wandb

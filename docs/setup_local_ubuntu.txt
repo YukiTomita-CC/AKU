@@ -1,0 +1,9 @@
+pip install trl==0.10.1
+pip install torch torchvision torchaudio
+pip install sentencepiece==0.2.0
+pip install protobuf==5.28.1
+pip install bitsandbytes==0.43.3
+
+pip install wandb
+wandb login
+export WANDB_PROJECT=AKU-d_ms-0_5B-chat-v0_1

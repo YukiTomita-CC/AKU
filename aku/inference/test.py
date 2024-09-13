@@ -43,7 +43,7 @@ class AkuModel:
         tps = num_tokens / elapsed_time
         
         output = self.tokenizer.decode(tokens[0])
-        output = output.replace(' ', '\n') # might be unnecessary in the future
+        # output = output.replace(' ', '\n') # might be unnecessary in the future
 
         print("-" * 10, "Prompt", "-" * 10)
         print(f"{prompt} -> {output[len(prompt):]}")
@@ -52,7 +52,7 @@ class AkuModel:
 
 
 if __name__ == "__main__":
-    model_path = "models/baseline_2epoch"
+    model_path = "aku/fine_tuning/output/checkpoint-100"
     if not os.path.exists(model_path):
         print(f"Model {model_path} does not exist.")
         exit(1)

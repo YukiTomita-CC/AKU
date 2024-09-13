@@ -28,12 +28,12 @@ def formatting_prompts_func(example):
             text += f"\n<ROLE>{convert_role(example['input'][i][j]['role'])}</ROLE>\n{example['input'][i][j]['content']}"
         
         text += f" <ATTR> likability: {example['likability'][i]} mood: {example['mood'][i]} </ATTR>"
-        text += "\n<ROLE>Aku</ROLE>\n"
+        text += f"\n<ROLE>Aku</ROLE>\n{example['output'][i]}<EOS>"
 
         output_texts.append(text)
     return output_texts
 
-response_template = "<ROLE>Aku</ROLE>\n"
+response_template = [6, 9, 7]
 collator = DataCollatorForCompletionOnlyLM(
     response_template=response_template,
     tokenizer=tokenizer,
@@ -43,35 +43,36 @@ collator = DataCollatorForCompletionOnlyLM(
 config = SFTConfig(
     output_dir="aku/fine_tuning/output",
     do_train=True,
-    do_eval=True,
-    evaluation_strategy="steps",
-    prediction_loss_only=False, # ?
-    per_device_train_batch_size=4,
-    per_device_eval_batch_size=4,
-    gradient_accumulation_steps=8,
-    learning_rate=5e-5,
-    weight_decay=0.01,
+    do_eval=False,
+    # evaluation_strategy="steps",
+    prediction_loss_only=True,
+    per_device_train_batch_size=1,
+    # per_device_eval_batch_size=1,
+    gradient_accumulation_steps=1,
+    learning_rate=1e-6,
+    weight_decay=0.1,
     adam_beta1=0.9,
     adam_beta2=0.95,
-    adam_epsilon=1e-8,
+    adam_epsilon=1.0e-4,
     num_train_epochs=3,
     lr_scheduler_type="cosine",
-    warmup_steps=100,
+    warmup_steps=10,
     logging_dir="aku/fine_tuning/logs",
     logging_strategy="steps",
+    logging_steps=5,
     save_strategy="steps",
-    save_steps=100,
+    save_steps=500,
     save_total_limit=3,
     save_safetensors=True,
     seed=42,
     fp16=True,
-    eval_steps=100,
+    # eval_steps=100,
     dataloader_num_workers=4,
     run_name="test",
     remove_unused_columns=True,
     optim="adamw_bnb_8bit",
     report_to="wandb",
-    neftune_noise_alpha=0.1,
+    # neftune_noise_alpha=0.1,
     packing=False,
 )
 
@@ -83,4 +84,13 @@ trainer = SFTTrainer(
     data_collator=collator,
 )
 
-# trainer.train()
+# from torch.utils.data import DataLoader
+# loader = DataLoader(trainer.train_dataset, collate_fn=collator, batch_size=4)
+
+# batch = next(iter(loader))
+# print(batch['labels'][1])
+# print(batch['input_ids'][1])
+# print(batch['attention_mask'][1])
+
+
+trainer.train()

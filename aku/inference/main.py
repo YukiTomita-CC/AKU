@@ -10,7 +10,8 @@ run_names = {
     "0": "baseline",
     "1": "curriculum",
     "2": "inc_batch",
-    "3": "not_gqa"
+    "3": "not_gqa",
+    "4": "checkpoint"
     }
 
 def download_model(revision: str) -> None:
@@ -64,11 +65,11 @@ def inference(model_name: str, device: str, manual_prompt: str = None) -> None:
             elapsed_time = end_time - start_time
             tps = num_tokens / elapsed_time
             
-            output = tokenizer.decode(tokens[0])
-            output = output.replace(' ', '\n') # might be unnecessary in the future
+            output = tokenizer.decode(tokens[0], skip_special_tokens=True)
+            # output = output.replace(' ', '\n') # might be unnecessary in the future
 
             print("-" * 10, f"Prompt_{str(i)}", "-" * 10)
-            print(f"{prompt} -> {output[len(prompt):]}")
+            print(f"{prompt} -> {output}")
             print(f"[Time taken: {elapsed_time:.2f}s, Number of tokens: {num_tokens}, TPS: {tps:.2f}]")
             print()
     
