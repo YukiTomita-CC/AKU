@@ -170,6 +170,7 @@ output
 *.vocab
 models
 !data/test_set.txt
+!data/validation
 wandb
 aku/dataset/original/assets/assistant_icon.png
 corpus.txt

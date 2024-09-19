@@ -9,6 +9,8 @@ apt-get update
 apt-get install -y python3.11 python3.11-venv python3.11-dev
 update-alternatives --install /usr/bin/python python /usr/bin/python3.11 130
 update-alternatives --set python /usr/bin/python3.11
+# pythonのバージョン確認
+python --version
 
 git clone https://github.com/YukiTomita-CC/AKU.git
 cd AKU
@@ -19,7 +21,7 @@ source .venv/bin/activate
 .venv/bin/python -m pip install --upgrade pip
 
 pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
-# neologdnでエラーが出るためtrainのみならコメントアウトする
+# neologdnでエラーが出るためtrainのみならコメントアウトする(今のmainブランチはコメントアウト済み)
 pip install -r requirements/requirements_train.txt
 pip install flash-attn==2.3.4 --no-build-isolation
 
@@ -36,3 +38,15 @@ bash aku/training/create_corpus.sh
 # 352行目: hasattr(self.config, "sliding_window") is not None -> getattr(self.config, "sliding_window", None) is not None
 # 364行目: hasattr(self.config, "sliding_window") -> getattr(self.config, "sliding_window", None) is not None
 vim .venv/lib/python3.11/site-packages/transformers/models/mistral/modeling_mistral.py
+
+screen -S {session_name}
+source .venv/bin/activate
+# WANDB_PROJECTとHOMEに正しい値が入っているか確認
+env
+
+# データセットとトークナイザの確認
+ls -lh aku/training/dataset/train.txt
+ls -lh aku/training/dataset/test.txt
+ls aku/training/tokenizer/custom
+
+.venv/bin/python aku/training/train_run_clm.py aku/training/config/training_config-run11_128.json
