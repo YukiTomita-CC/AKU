@@ -2,7 +2,7 @@ import os
 import time
 
 import torch
-from transformers import MistralForCausalLM, T5Tokenizer
+from transformers import AutoModelForCausalLM, AutoTokenizer
 
 
 class AkuModel:
@@ -12,18 +12,16 @@ class AkuModel:
             device = "cpu"
             print("CUDA is not available. Continuing with CPU.")
 
-        self.model = MistralForCausalLM.from_pretrained(model_path, local_files_only=True, torch_dtype=torch.float32).to(device)
-        self.tokenizer = T5Tokenizer.from_pretrained(model_path)
+        self.model = AutoModelForCausalLM.from_pretrained(model_path, local_files_only=True, torch_dtype=torch.float16).to(device)
+        self.tokenizer = AutoTokenizer.from_pretrained(model_path, use_fast=False)
 
     def inference(self, prompt: str) -> None:
         prompt = prompt.strip().replace("__BR__", "\n")
-        inputs = self.tokenizer(prompt, return_tensors="pt")
-        
-        if inputs['input_ids'][:, -1] == self.tokenizer.eos_token_id:
-            inputs['input_ids'] = inputs['input_ids'][:, :-1]
-            inputs['attention_mask'] = inputs['attention_mask'][:, :-1]
-        inputs.to(self.model.device)
-        # print(inputs)
+        inputs = self.tokenizer(
+            prompt,
+            return_tensors="pt",
+            add_special_tokens=False
+            ).to(self.model.device)
 
         start_time = time.time()
         with torch.no_grad():
@@ -43,7 +41,6 @@ class AkuModel:
         tps = num_tokens / elapsed_time
         
         output = self.tokenizer.decode(tokens[0])
-        # output = output.replace(' ', '\n') # might be unnecessary in the future
 
         print("-" * 10, "Prompt", "-" * 10)
         print(f"{prompt} -> {output[len(prompt):]}")
