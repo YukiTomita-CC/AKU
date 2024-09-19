@@ -9,6 +9,8 @@ def train_tokenizer(corpus_file: str="corpus.txt", save_as_llama_tokenizer: bool
     OUTPUT_DIR_1 = "models/custom_llama_tokenizer"
     OUTPUT_DIR_2 = "models/custom_t5_tokenizer"
 
+    os.makedirs("models", exist_ok=True)
+
     spm.SentencePieceTrainer.train(
         input=corpus_file,
         model_type="unigram",
