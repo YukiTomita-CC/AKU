@@ -2,7 +2,6 @@ import json
 import os
 
 from tqdm import tqdm
-import neologdn
 
 from aku.dataset.common.output_check import has_lines_no_start_with_role
 from aku.dataset.common.prompt_formatter import format_prompt
@@ -27,7 +26,7 @@ def main():
             for utterance in utterances:
                 conversation.append({
                     "role": "User" if utterance["role"] == "user" else "Aku",
-                    "content": neologdn.normalize(utterance["content"])
+                    "content": utterance["content"].replace("？", "?").replace("！", "!")
                 })
         
         contents.append(format_prompt(conversation))

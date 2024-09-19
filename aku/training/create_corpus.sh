@@ -8,6 +8,8 @@ test_file="aku/training/dataset/test.txt"
 > "$test_file"
 
 for file in "$DIR_PATH"/*.txt; do
+  echo "Processing $file ..."
+
   line_count=$(wc -l < "$file")
 
   train_lines=$(( line_count * 95 / 100 ))

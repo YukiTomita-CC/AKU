@@ -27,8 +27,7 @@ def train_tokenizer(corpus_file: str="corpus.txt", save_as_llama_tokenizer: bool
         unk_piece="<UNK>",
         bos_piece="<BOS>",
         eos_piece="<EOS>",
-        pad_piece="<PAD>",
-        train_extremely_large_corpus=True,
+        pad_piece="<PAD>"
         )
 
     if save_as_llama_tokenizer:
