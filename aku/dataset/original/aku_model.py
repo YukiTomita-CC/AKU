@@ -42,7 +42,7 @@ class AkuModel:
         if attr_idx != -1:
             output = output[attr_idx + len("</ATTR>"):]
         
-        output = output[len("<ROLE>Aku</ROLE> "):]
+        output = output[len("<ROLE>Aku</ROLE> ") + 3:]
 
         role_idx = output.find("<ROLE>")
         if role_idx != -1:
