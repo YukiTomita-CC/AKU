@@ -1,5 +1,4 @@
 #!/bin/bash
-cd workspace
 export HOME=/workspace
 
 apt-get update && apt-get install -y git git-lfs curl wget build-essential \
@@ -14,9 +13,6 @@ apt-get install -y python3.11 python3.11-venv python3.11-dev
 update-alternatives --install /usr/bin/python python /usr/bin/python3.11 130
 update-alternatives --set python /usr/bin/python3.11
 
-python --version
-
-git clone https://github.com/YukiTomita-CC/AKU.git
 cd AKU
 
 mkdir -p log
