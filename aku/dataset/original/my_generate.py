@@ -19,7 +19,48 @@ class UserResponseGenerator:
         humor = 0
         creativity = 0
 
-        messages = conversations[:-1]
+        prompt = """あなたのタスクは「日常会話コーパスの作成を補助すること」です。
+以下の設定に基づいて、自然で一貫性のある会話を生成してください：
+
+あなたのペルソナ:
+- 社会人の男性
+- 趣味：食べること、映画鑑賞
+- 話し方：フレンドリーで穏やか
+
+状況設定：
+- パートナーであるAkuと家で二人でのんびりしている
+
+会話のトピック：
+- 今日のご飯について
+
+会話のスタイル：
+- カジュアルで自然な会話
+- 1回の発言は1〜3文程度で簡潔に
+
+指示：
+会話のトピックについて話を展開してください。質問や提案、相槌を交えながら、自然な会話の流れを作ってください。
+
+では、コーパスの作成を開始します。上記の設定に基づいて、会話の最初の発言を生成してください。"""
+
+        messages = [
+            {
+                "role": "user",
+                "content": prompt
+            }
+        ]
+
+        for conv in conversations[:-1]:
+            if conv["role"] == "user":
+                messages.append({
+                    "role": "assistant",
+                    "content": conv["content"]
+                })
+            else:
+                messages.append({
+                    "role": "user",
+                    "content": conv["content"]
+                })
+
         messages.append({
             "role": "user",
             "content": conversations[-1]["content"],

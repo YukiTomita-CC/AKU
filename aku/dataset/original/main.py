@@ -1,6 +1,7 @@
 import json
 import os
 
+import requests
 import streamlit as st
 
 from aku_model import AkuModel
@@ -129,7 +130,20 @@ def load_model():
     st.session_state.model = AkuModel(model_dir)
 
 def generate_response():
-    pass
+    url = 'https://7cg3cu9m4s566z-13513.proxy.runpod.net/generate'
+
+    payload = {
+        "model_name": "",
+        "conversations": st.session_state.current_dialogs
+    }
+
+    response = requests.post(url, json=payload)
+
+    if response.status_code == 200:
+        st.session_state.model_responses = response.json()
+    else:
+        print(f"Error: {response.status_code}")
+
 
 if 'current_dialogs' not in st.session_state:
     st.session_state.current_dialogs = []
