@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify
 
-from aku.dataset.original.my_generate import UserResponseGenerator
+from my_generate import UserResponseGenerator
 
 
 app = Flask(__name__)
