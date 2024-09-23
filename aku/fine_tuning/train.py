@@ -1,16 +1,17 @@
 from datasets import load_dataset
 from huggingface_hub import login
-from transformers import MistralForCausalLM, T5Tokenizer
+from transformers import AutoModelForCausalLM, AutoTokenizer
 from trl import SFTConfig, SFTTrainer, DataCollatorForCompletionOnlyLM
 
 
 login()
 
 dataset = load_dataset("YukiTomita-CC/AKU-d_ms-0.5B-chat-v0.1_dataset", split="train")
+print(f"Dataset size: {len(dataset)}")
 
-model_path = "models/inc_batch_2epoch"
-model = MistralForCausalLM.from_pretrained(model_path)
-tokenizer = T5Tokenizer.from_pretrained(model_path)
+model_path = "models/final"
+model = AutoModelForCausalLM.from_pretrained(model_path)
+tokenizer = AutoTokenizer.from_pretrained(model_path, use_fast=False)
 
 def convert_role(role):
     if role == "user":
@@ -54,14 +55,14 @@ config = SFTConfig(
     adam_beta1=0.9,
     adam_beta2=0.95,
     adam_epsilon=1.0e-4,
-    num_train_epochs=3,
+    num_train_epochs=5,
     lr_scheduler_type="cosine",
     warmup_steps=10,
     logging_dir="aku/fine_tuning/logs",
     logging_strategy="steps",
     logging_steps=5,
     save_strategy="steps",
-    save_steps=500,
+    save_steps=5000,
     save_total_limit=3,
     save_safetensors=True,
     seed=42,

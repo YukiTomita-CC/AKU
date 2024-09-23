@@ -1,5 +1,5 @@
 import torch
-from transformers import MistralForCausalLM, T5Tokenizer
+from transformers import AutoModelForCausalLM, AutoTokenizer
 
 
 class AkuModel:
@@ -9,14 +9,14 @@ class AkuModel:
             device = "cpu"
             print("CUDA is not available. Continuing with CPU.")
 
-        self.model = MistralForCausalLM.from_pretrained(model_path, local_files_only=True, torch_dtype=torch.float32).to(device)
-        self.tokenizer = T5Tokenizer.from_pretrained(model_path)
+        self.model = AutoModelForCausalLM.from_pretrained(model_path, local_files_only=True, torch_dtype=torch.float16).to(device)
+        self.tokenizer = AutoTokenizer.from_pretrained(model_path, use_fast=False)
     
     def _format_to_prompt_template(self, input_info: dict) -> str:
         prompt = f"<CONTEXT>{input_info['context']}</CONTEXT>\n"
         for dialog in input_info["dialogs"]:
             role = "User" if dialog["role"] == "user" else "Aku"
-            prompt += f"\n<ROLE>{dialog['role']}</ROLE>\n{dialog['content']}\n"
+            prompt += f"\n<ROLE>{role}</ROLE>\n{dialog['content']}\n"
         
         prompt += f" <ATTR>likability: {input_info['likability']} mood: {input_info['mood']}</ATTR>\n<ROLE>Aku</ROLE>\n"
 
@@ -29,14 +29,10 @@ class AkuModel:
         with torch.no_grad():
             tokens = self.model.generate(
                 **inputs,
-                max_new_tokens=32,
-                do_sample=True,
-                temperature=0.99,
-                top_p=0.9,
-                pad_token_id=self.tokenizer.eos_token_id
+                max_new_tokens=32
             )
         
-        output = self.tokenizer.decode(tokens[0], skip_special_tokens=True)
+        output = self.tokenizer.decode(tokens[0])
 
         attr_idx = output.rfind("</ATTR>")
         if attr_idx != -1:

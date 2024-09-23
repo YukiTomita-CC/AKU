@@ -1,5 +1,7 @@
-from datasets import Dataset
 import json
+import os
+
+from datasets import Dataset
 from huggingface_hub import login
 
 
@@ -23,32 +25,43 @@ def gen(max_dialog_num: int):
 
         data = json.loads(data)
         context = data["context"]
-        for i in range(len(data["conversation"])):
+        print(f"Length of data: {len(data['conversations'])}")
+        for i in range(len(data["conversations"])):
             if i % 2 == 1:
                 input = []
                 for j in range(i):
                     if j % 2 == 0:
-                        input.append(replace_question_and_exclamation_marks(data["conversation"][j]))
+                        input.append(replace_question_and_exclamation_marks(data["conversations"][j]))
                     else:
                         input.append(
                             {
-                                "role": data["conversation"][j]["role"],
-                                "content": replace_question_and_exclamation_marks(data["conversation"][j]["content"])
+                                "role": data["conversations"][j]["role"],
+                                "content": replace_question_and_exclamation_marks(data["conversations"][j]["content"])
                             })
+                
+                if len(input) > 9:
+                    input = input[-9:]
 
                 yield {
                     "dialog_id": str(n),
                     "context": context,
                     "input": input,
-                    "output": replace_question_and_exclamation_marks(data["conversation"][i]["content"]),
-                    "likability": data["conversation"][i]["attribute"]["likability"],
-                    "mood": data["conversation"][i]["attribute"]["mood"]
+                    "output": replace_question_and_exclamation_marks(data["conversations"][i]["content"]),
+                    "likability": data["conversations"][i]["attribute"]["likability"],
+                    "mood": data["conversations"][i]["attribute"]["mood"]
                 }
 
 
 if __name__ == "__main__":
-    max_dialog_num = 10
+    max_dialog_num = 0
+    for n in range(1000):
+        if not os.path.exists(f"aku/dataset/original/conversations/conv_{n}.json"):
+            max_dialog_num = n
+            break
+
     ds = Dataset.from_generator(gen, gen_kwargs={"max_dialog_num": max_dialog_num})
 
-    login()
-    ds.push_to_hub("YukiTomita-CC/AKU-d_ms-0.5B-chat-v0.1_dataset", private=True)
+    print(f"Number of examples: {len(ds)}")
+
+    # login()
+    # ds.push_to_hub("YukiTomita-CC/AKU-d_ms-0.5B-chat-v0.1_dataset", private=True)
