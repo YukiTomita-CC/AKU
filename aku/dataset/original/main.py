@@ -4,7 +4,8 @@ import os
 import requests
 import streamlit as st
 
-from aku_model import AkuModel
+# from aku_model import AkuModel
+from theme_logger import get_random_theme_and_persona
 
 
 st.set_page_config(layout="wide")
@@ -127,7 +128,7 @@ def load_model():
         st.error(f"Model {model_name} does not exist.")
         return
     
-    st.session_state.model = AkuModel(model_dir)
+    st.session_state.model = None # AkuModel(model_dir)
 
 def generate_response():
     url = 'https://7cg3cu9m4s566z-13513.proxy.runpod.net/generate'
@@ -169,6 +170,9 @@ if 'model_responses' not in st.session_state:
 if 'assistant_icon' not in st.session_state:
     icon_path = "aku/dataset/original/assets/assistant_icon.png"
     st.session_state.assistant_icon = icon_path if os.path.exists(icon_path) else None
+
+if 'current_dialogs_settings' not in st.session_state:
+    st.session_state.current_dialogs_settings = get_random_theme_and_persona()
 
 
 for emoji in emojis:
@@ -249,10 +253,14 @@ with generate:
             )
     
     with st.container(height=685, border=True):
-        for i, response in enumerate(st.session_state.model_responses):
-            st.write(f"#### {i + 1}st generation")
-            with st.chat_message("assistant"):
-                st.write(response)
+        if len(st.session_state.model_responses) > 0:
+            for i, response in enumerate(st.session_state.model_responses):
+                st.write(f"#### {i + 1}st generation")
+                with st.chat_message("assistant"):
+                    st.write(response)
+        else:
+            st.write(f"### Theme\n{st.session_state.current_dialogs_settings['theme']}\n### Persona")
+            st.write(f"```json\n{json.dumps(st.session_state.current_dialogs_settings['user_persona'], ensure_ascii=False, indent=2)}\n```")
     
     gen1, gen2, gen3, gen4, gen5 = st.columns(5)
     with gen1:
