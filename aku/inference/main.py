@@ -3,7 +3,7 @@ import time
 
 from huggingface_hub import snapshot_download
 import torch
-from transformers import MistralForCausalLM, T5Tokenizer
+from transformers import AutoModelForCausalLM, AutoTokenizer
 
 
 run_names = {
@@ -11,7 +11,8 @@ run_names = {
     "1": "curriculum",
     "2": "inc_batch",
     "3": "not_gqa",
-    "4": "checkpoint"
+    "4": "checkpoint",
+    "5": "final_rlx8",
     }
 
 def download_model(revision: str) -> None:
@@ -30,48 +31,43 @@ def inference(model_name: str, device: str, manual_prompt: str = None) -> None:
         return
     
     print(f"Loading model ...")
-    model = MistralForCausalLM.from_pretrained(model_path, local_files_only=True, torch_dtype=torch.float32).to(device)
-    tokenizer = T5Tokenizer.from_pretrained(model_path)
+    model = AutoModelForCausalLM.from_pretrained(model_path, local_files_only=True, torch_dtype=torch.float32).to(device)
+    tokenizer = AutoTokenizer.from_pretrained(model_path, use_fast=False)
 
     print("Starting inference ...")
     if not manual_prompt:
         with open("data/test_set.txt", "r", encoding="utf-8") as f:
             test_set = f.readlines()
-        
-        for i, prompt in enumerate(test_set):
-            prompt = prompt.strip().replace("__BR__", "\n")
-            inputs = tokenizer(prompt, return_tensors="pt")
+
+        while True:
+            prompt = input("Enter a prompt: ")
+            test_set = [prompt]
             
-            if inputs['input_ids'][:, -1] == tokenizer.eos_token_id:
-                inputs['input_ids'] = inputs['input_ids'][:, :-1]
-                inputs['attention_mask'] = inputs['attention_mask'][:, :-1]
-            inputs.to(model.device)
-            # print(inputs)
+            for i, prompt in enumerate(test_set):
+                prompt = prompt.strip().replace("__BR__", "\n")
+                inputs = tokenizer(prompt, return_tensors="pt", add_special_tokens=False).to(model.device)
+                input_ids = inputs["input_ids"]
 
-            start_time = time.time()
-            with torch.no_grad():
-                tokens = model.generate(
-                    **inputs,
-                    max_new_tokens=128,
-                    do_sample=True,
-                    temperature=0.8,
-                    top_p=0.9,
-                    repetition_penalty=1.05,
-                    pad_token_id=tokenizer.eos_token_id,
-                )
-            end_time = time.time()
+                with torch.no_grad():
+                    output_ids = model.generate(
+                        input_ids,
+                        max_new_tokens=128,
+                        do_sample=True,
+                        top_k=50,
+                        top_p=0.9,
+                        num_return_sequences=5,
+                        pad_token_id=tokenizer.eos_token_id,
+                    )
 
-            num_tokens = len(tokens[0]) - len(inputs['input_ids'][0])
-            elapsed_time = end_time - start_time
-            tps = num_tokens / elapsed_time
-            
-            output = tokenizer.decode(tokens[0], skip_special_tokens=True)
-            # output = output.replace(' ', '\n') # might be unnecessary in the future
+                # output = tokenizer.decode(tokens[0])
 
-            print("-" * 10, f"Prompt_{str(i)}", "-" * 10)
-            print(f"{prompt} -> {output}")
-            print(f"[Time taken: {elapsed_time:.2f}s, Number of tokens: {num_tokens}, TPS: {tps:.2f}]")
-            print()
+                for output_id in output_ids:
+                    print(tokenizer.decode(output_id, skip_special_tokens=True))
+                    print("\n" + "-"*50 + "\n")
+
+                # print("-" * 10, f"Prompt_{str(i)}", "-" * 10)
+                # print(f"{prompt} -> {output}")
+                # print()
     
     else:
         pass
