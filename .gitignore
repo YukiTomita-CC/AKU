@@ -165,6 +165,7 @@ data/*
 aku/training/prepare
 aku/dataset/original/persona/
 aku/dataset/original/conversations
+aku/dataset/original/edited_conversations
 output
 *.model
 *.vocab
