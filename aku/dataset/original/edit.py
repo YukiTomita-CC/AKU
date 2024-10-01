@@ -1,7 +1,8 @@
 import json
 import os
+import re
 
-# import pyperclip
+import pyperclip
 import streamlit as st
 
 
@@ -43,7 +44,7 @@ def load_user_persona():
     return user_personas
 
 def add_emoji(emoji):
-    # pyperclip.copy(emoji)
+    pyperclip.copy(emoji)
     pass
 
 def load_conversation_filepaths():
@@ -51,8 +52,16 @@ def load_conversation_filepaths():
     if not os.path.exists(base_dir):
         return []
     
+    file_list = [file for file in os.listdir(base_dir) if file.endswith(".json")]
+
+    def sort_key(file_name):
+        number = re.findall(r'\d+', file_name)
+        return int(number[0]) if number else 0
+
+    sorted_list = sorted(file_list, key=sort_key)
+    
     logs = []
-    for file_name in os.listdir(base_dir):
+    for file_name in sorted_list:
         if file_name.endswith(".json"):
             logs.append(os.path.join(base_dir, file_name))
 

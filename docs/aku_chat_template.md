@@ -1,9 +1,7 @@
 # AKU Chat Template
 ## Template
 ```
-<BOS><CONTEXT>{{context}}</CONTEXT>
-
-<ROLE>User</ROLE>
+<BOS><ROLE>User</ROLE>
 {{user_1}}
 <ROLE>Aku</ROLE>
 {{aku_1}}
@@ -12,9 +10,8 @@
 <ROLE>Aku</ROLE>
 {{aku_2}}
 <ROLE>User</ROLE>
-{{user_3}}
+{{user_3}} <ATTR> likability: {{1 ~ 5}} mood: {{1 ~ 5}} </ATTR>
 <ROLE>Aku</ROLE>
-<ATTR> likability: {{0 ~ 4}} mood: {{0 ~ 4}} </ATTR>
 
 ```
 

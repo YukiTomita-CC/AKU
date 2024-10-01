@@ -63,5 +63,8 @@ if __name__ == "__main__":
 
     print(f"Number of examples: {len(ds)}")
 
-    # login()
-    # ds.push_to_hub("YukiTomita-CC/AKU-d_ms-0.5B-chat-v0.1_dataset", private=True)
+    ds = ds.train_test_split(test_size=0.05)
+    print(ds)
+
+    login()
+    ds.push_to_hub("YukiTomita-CC/AKU-d_ms-0.5B-chat-v0.1_dataset", private=True)

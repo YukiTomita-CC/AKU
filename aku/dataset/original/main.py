@@ -141,7 +141,12 @@ def generate_response():
     response = requests.post(url, json=payload)
 
     if response.status_code == 200:
-        st.session_state.model_responses = response.json()
+        j = response.json()
+        results = []
+        for item in j:
+            results.append(item["content"])
+        
+        st.session_state.model_responses = results
     else:
         print(f"Error: {response.status_code}")
 
@@ -172,7 +177,8 @@ if 'assistant_icon' not in st.session_state:
     st.session_state.assistant_icon = icon_path if os.path.exists(icon_path) else None
 
 if 'current_dialogs_settings' not in st.session_state:
-    st.session_state.current_dialogs_settings = get_random_theme_and_persona()
+    # st.session_state.current_dialogs_settings = get_random_theme_and_persona()
+    pass
 
 
 for emoji in emojis:
@@ -216,7 +222,7 @@ with chat:
         for i, dialog in enumerate(st.session_state.current_dialogs):
             avatar = None if dialog["role"] == "user" else st.session_state.assistant_icon
             with st.chat_message(dialog["role"], avatar=avatar):
-                st.write(dialog["content"])
+                st.text_input("label", dialog["content"], label_visibility="collapsed")
         st.write(f"Conversation Turns: {len(st.session_state.current_dialogs) // 2}")
     
     text_input, send_button = st.columns([9, 1])
