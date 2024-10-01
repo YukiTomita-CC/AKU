@@ -24,37 +24,40 @@ def gen(max_dialog_num: int):
             data = f.read()
 
         data = json.loads(data)
-        context = data["context"]
-        print(f"Length of data: {len(data['conversations'])}")
-        for i in range(len(data["conversations"])):
-            if i % 2 == 1:
-                input = []
-                for j in range(i):
-                    if j % 2 == 0:
-                        input.append(replace_question_and_exclamation_marks(data["conversations"][j]))
-                    else:
-                        input.append(
-                            {
-                                "role": data["conversations"][j]["role"],
-                                "content": replace_question_and_exclamation_marks(data["conversations"][j]["content"])
-                            })
-                
-                if len(input) > 9:
-                    input = input[-9:]
+        # print(f"Length of data: {len(data['conversations'])}")
 
-                yield {
-                    "dialog_id": str(n),
-                    "context": context,
-                    "input": input,
-                    "output": replace_question_and_exclamation_marks(data["conversations"][i]["content"]),
-                    "likability": data["conversations"][i]["attribute"]["likability"],
-                    "mood": data["conversations"][i]["attribute"]["mood"]
-                }
+        try:
+            for i in range(len(data["conversations"])):
+                if i % 2 == 1:
+                    input = []
+                    for j in range(i):
+                        if j % 2 == 0:
+                            input.append(replace_question_and_exclamation_marks(data["conversations"][j]))
+                        else:
+                            input.append(
+                                {
+                                    "role": data["conversations"][j]["role"],
+                                    "content": replace_question_and_exclamation_marks(data["conversations"][j]["content"])
+                                })
+                    
+                    if len(input) > 9:
+                        input = input[-9:]
+
+                    yield {
+                        "dialog_id": str(n),
+                        "input": input,
+                        "output": replace_question_and_exclamation_marks(data["conversations"][i]["content"]),
+                        "likability": data["conversations"][i]["attribute"]["likability"],
+                        "mood": data["conversations"][i]["attribute"]["mood"]
+                    }
+
+        except Exception as e:
+            print(f"Error in conversation {n}: {e}")
 
 
 if __name__ == "__main__":
     max_dialog_num = 0
-    for n in range(1000):
+    for n in range(2000):
         if not os.path.exists(f"aku/dataset/original/conversations/conv_{n}.json"):
             max_dialog_num = n
             break
