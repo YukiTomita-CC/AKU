@@ -66,23 +66,18 @@ def gen(max_dialog_num: int):
 
 
 if __name__ == "__main__":
-    # max_dialog_num = 0
-    # for n in range(2000):
-    #     if not os.path.exists(f"aku/dataset/original/conversations/conv_{n}.json"):
-    #         max_dialog_num = n
-    #         break
+    max_dialog_num = 0
+    for n in range(2000):
+        if not os.path.exists(f"aku/dataset/original/conversations/conv_{n}.json"):
+            max_dialog_num = n
+            break
 
-    # ds = Dataset.from_generator(gen, gen_kwargs={"max_dialog_num": max_dialog_num})
+    ds = Dataset.from_generator(gen, gen_kwargs={"max_dialog_num": max_dialog_num})
 
-    # print(f"Number of examples: {len(ds)}")
+    print(f"Number of examples: {len(ds)}")
 
-    # ds = ds.train_test_split(test_size=0.05)
-    # print(ds)
+    ds = ds.train_test_split(test_size=0.05)
+    print(ds)
 
-    # ds.save_to_disk("aku/dataset/original/aku-d_ms-0.5B-chat-v0.1_dataset")
-
-    # login()
-    # ds.push_to_hub("YukiTomita-CC/AKU-d_ms-0.5B-chat-v0.1_dataset", private=True)
-
-    ds = load_from_disk(r"aku\dataset\original\aku-d_ms-0.5B-chat-v0.1_dataset")
-    print(ds["train"][1])
+    login()
+    ds.push_to_hub("YukiTomita-CC/AKU-d_ms-0.5B-chat-v0.1_dataset", private=True)

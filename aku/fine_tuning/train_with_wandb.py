@@ -4,11 +4,10 @@ from transformers import AutoModelForCausalLM, AutoTokenizer, DataCollatorForLan
 from trl import SFTConfig, SFTTrainer, DataCollatorForCompletionOnlyLM
 
 
-# dataset = load_dataset("YukiTomita-CC/AKU-d_ms-0.5B-chat-v0.1_dataset", token="YOUR_TOKEN")
-dataset = load_from_disk("aku/dataset/original/aku-d_ms-0.5B-chat-v0.1_dataset")
+dataset = load_dataset("YukiTomita-CC/AKU-d_ms-0.5B-chat-v0.1_dataset", token="YOUR_TOKEN")
 print(f"Dataset size: {len(dataset)}")
 
-model_path = "models/final"
+model_path = "models/AKU-d_ms-0.5B-v0.3"
 tokenizer = AutoTokenizer.from_pretrained(model_path, use_fast=False)
 
 def convert_role(role):
@@ -109,19 +108,11 @@ trainer = SFTTrainer(
     data_collator=collator,
 )
 
-from torch.utils.data import DataLoader
-loader = DataLoader(trainer.train_dataset, collate_fn=collator, batch_size=4)
+best_trial = trainer.hyperparameter_search(
+    direction="minimize",
+    backend="wandb",
+    hp_space=wandb_hp_space,
+    n_trials=100,
+)
 
-batch = next(iter(loader))
-print(batch['labels'][1])
-print(batch['input_ids'][1])
-print(batch['attention_mask'][1])
-
-# best_trial = trainer.hyperparameter_search(
-#     direction="minimize",
-#     backend="wandb",
-#     hp_space=wandb_hp_space,
-#     n_trials=100,
-# )
-
-# print(f"Best trial results: {best_trial}")
+print(f"Best trial results: {best_trial}")
