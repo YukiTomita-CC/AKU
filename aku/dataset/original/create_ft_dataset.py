@@ -2,6 +2,7 @@ import json
 import os
 
 from datasets import Dataset
+from datasets import load_dataset, load_from_disk
 from huggingface_hub import login
 
 
@@ -24,31 +25,40 @@ def gen(max_dialog_num: int):
             data = f.read()
 
         data = json.loads(data)
-        # print(f"Length of data: {len(data['conversations'])}")
 
         try:
-            for i in range(len(data["conversations"])):
-                if i % 2 == 1:
-                    input = []
-                    for j in range(i):
-                        if j % 2 == 0:
-                            input.append(replace_question_and_exclamation_marks(data["conversations"][j]))
-                        else:
-                            input.append(
-                                {
-                                    "role": data["conversations"][j]["role"],
-                                    "content": replace_question_and_exclamation_marks(data["conversations"][j]["content"])
-                                })
-                    
-                    if len(input) > 9:
-                        input = input[-9:]
+            num_conversations = len(data["conversations"])
+            
+            if num_conversations <= 10:
+                input = [
+                    replace_question_and_exclamation_marks(conversation)
+                    if i % 2 == 0 else
+                    {
+                        "role": conversation["role"],
+                        "content": replace_question_and_exclamation_marks(conversation["content"])
+                    }
+                    for i, conversation in enumerate(data["conversations"])
+                ]
+
+                yield {
+                    "dialog_id": str(n),
+                    "input": input
+                }
+            else:
+                for i in range(0, num_conversations, 10):
+                    input = [
+                        replace_question_and_exclamation_marks(data["conversations"][j])
+                        if j % 2 == 0 else
+                        {
+                            "role": data["conversations"][j]["role"],
+                            "content": replace_question_and_exclamation_marks(data["conversations"][j]["content"])
+                        }
+                        for j in range(i, min(i + 10, num_conversations))
+                    ]
 
                     yield {
-                        "dialog_id": str(n),
-                        "input": input,
-                        "output": replace_question_and_exclamation_marks(data["conversations"][i]["content"]),
-                        "likability": data["conversations"][i]["attribute"]["likability"],
-                        "mood": data["conversations"][i]["attribute"]["mood"]
+                        "dialog_id": f"{n}_{i // 10}",
+                        "input": input
                     }
 
         except Exception as e:
@@ -56,18 +66,23 @@ def gen(max_dialog_num: int):
 
 
 if __name__ == "__main__":
-    max_dialog_num = 0
-    for n in range(2000):
-        if not os.path.exists(f"aku/dataset/original/conversations/conv_{n}.json"):
-            max_dialog_num = n
-            break
+    # max_dialog_num = 0
+    # for n in range(2000):
+    #     if not os.path.exists(f"aku/dataset/original/conversations/conv_{n}.json"):
+    #         max_dialog_num = n
+    #         break
 
-    ds = Dataset.from_generator(gen, gen_kwargs={"max_dialog_num": max_dialog_num})
+    # ds = Dataset.from_generator(gen, gen_kwargs={"max_dialog_num": max_dialog_num})
 
-    print(f"Number of examples: {len(ds)}")
+    # print(f"Number of examples: {len(ds)}")
 
-    ds = ds.train_test_split(test_size=0.05)
-    print(ds)
+    # ds = ds.train_test_split(test_size=0.05)
+    # print(ds)
 
-    login()
-    ds.push_to_hub("YukiTomita-CC/AKU-d_ms-0.5B-chat-v0.1_dataset", private=True)
+    # ds.save_to_disk("aku/dataset/original/aku-d_ms-0.5B-chat-v0.1_dataset")
+
+    # login()
+    # ds.push_to_hub("YukiTomita-CC/AKU-d_ms-0.5B-chat-v0.1_dataset", private=True)
+
+    ds = load_from_disk(r"aku\dataset\original\aku-d_ms-0.5B-chat-v0.1_dataset")
+    print(ds["train"][1])

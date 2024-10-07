@@ -1,13 +1,14 @@
-from datasets import load_dataset
+from datasets import load_dataset, load_from_disk
 import torch
-from transformers import AutoModelForCausalLM, AutoTokenizer
+from transformers import AutoModelForCausalLM, AutoTokenizer, DataCollatorForLanguageModeling
 from trl import SFTConfig, SFTTrainer, DataCollatorForCompletionOnlyLM
 
 
-dataset = load_dataset("YukiTomita-CC/AKU-d_ms-0.5B-chat-v0.1_dataset", token="YOUR_TOKEN")
+# dataset = load_dataset("YukiTomita-CC/AKU-d_ms-0.5B-chat-v0.1_dataset", token="YOUR_TOKEN")
+dataset = load_from_disk("aku/dataset/original/aku-d_ms-0.5B-chat-v0.1_dataset")
 print(f"Dataset size: {len(dataset)}")
 
-model_path = "models/final_rlx8_5epoch"
+model_path = "models/final"
 tokenizer = AutoTokenizer.from_pretrained(model_path, use_fast=False)
 
 def convert_role(role):
@@ -23,20 +24,21 @@ def formatting_prompts_func(example):
     for i in range(len(example['dialog_id'])):
         text = ""
         for j in range(len(example['input'][i])):
-            if j == 0:
-                text += f"<ROLE>{convert_role(example['input'][i][j]['role'])}</ROLE>\n{example['input'][i][j]['content']}"
+            if example['input'][i][j]['role'] == "user":
+                text += f"<ROLE>{convert_role(example['input'][i][j]['role'])}</ROLE>\n{example['input'][i][j]['content']}\n"
             else:
-                text += f"\n<ROLE>{convert_role(example['input'][i][j]['role'])}</ROLE>\n{example['input'][i][j]['content']}"
-        
-        text += f" <ATTR> likability: {example['likability'][i]} mood: {example['mood'][i]} </ATTR>"
-        text += f"\n<ROLE>Aku</ROLE>\n{example['output'][i]}<EOS>"
+                text += f"<ROLE>{convert_role(example['input'][i][j]['role'])}</ROLE>\n{example['input'][i][j]['content']}<EOS>\n"
 
         output_texts.append(text)
     return output_texts
 
-response_template = [6, 9, 7]
-collator = DataCollatorForCompletionOnlyLM(
-    response_template=response_template,
+response_template = []
+# collator = DataCollatorForCompletionOnlyLM(
+#     response_template=response_template,
+#     tokenizer=tokenizer,
+#     mlm=False
+# )
+collator = DataCollatorForLanguageModeling(
     tokenizer=tokenizer,
     mlm=False
 )
@@ -107,11 +109,19 @@ trainer = SFTTrainer(
     data_collator=collator,
 )
 
-best_trial = trainer.hyperparameter_search(
-    direction="minimize",
-    backend="wandb",
-    hp_space=wandb_hp_space,
-    n_trials=100,
-)
+from torch.utils.data import DataLoader
+loader = DataLoader(trainer.train_dataset, collate_fn=collator, batch_size=4)
 
-print(f"Best trial results: {best_trial}")
+batch = next(iter(loader))
+print(batch['labels'][1])
+print(batch['input_ids'][1])
+print(batch['attention_mask'][1])
+
+# best_trial = trainer.hyperparameter_search(
+#     direction="minimize",
+#     backend="wandb",
+#     hp_space=wandb_hp_space,
+#     n_trials=100,
+# )
+
+# print(f"Best trial results: {best_trial}")
