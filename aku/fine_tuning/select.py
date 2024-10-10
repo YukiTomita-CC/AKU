@@ -2,6 +2,8 @@ import json
 import os
 import streamlit as st
 
+from aku_chat_model import AkuChatModel
+
 
 st.set_page_config(layout="wide")
 
@@ -27,7 +29,13 @@ def send_message():
     st.session_state.current_dialogs.append({"role": role, "content": st.session_state.input_message})
     st.session_state.input_message = ""
 
+    outputs = st.session_state.inference_model.generate_responses(st.session_state.current_dialogs)
+    st.session_state.model_outputs = outputs
+
 def save_record():
+    if st.session_state.best_responses_num == st.session_state.worst_responses_num:
+        return
+    
     record = {
         "input": st.session_state.current_dialogs,
         "chosen": st.session_state.model_outputs[st.session_state.best_responses_num],
@@ -52,10 +60,13 @@ def save_record():
 
 # ===== State =====
 if "model_outputs" not in st.session_state:
-    st.session_state.model_outputs = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"]
+    st.session_state.model_outputs = []
 
 if "current_dialogs" not in st.session_state:
     st.session_state.current_dialogs = []
+
+if "inference_model" not in st.session_state:
+    st.session_state.inference_model = AkuChatModel()
 
 if "best_responses_num" not in st.session_state:
     st.session_state.best_responses_num = 0

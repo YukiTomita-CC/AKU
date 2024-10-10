@@ -176,3 +176,4 @@ wandb
 aku/dataset/original/assets/assistant_icon.png
 corpus.txt
 envs
+aku/fine_tuning/dpo_data
