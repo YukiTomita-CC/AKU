@@ -38,7 +38,7 @@ def save_record():
     
     record = {
         "input": st.session_state.current_dialogs,
-        "chosen": st.session_state.model_outputs[st.session_state.best_responses_num],
+        "chosen": st.session_state[f"response_{st.session_state.best_responses_num}"],
         "rejected": st.session_state.model_outputs[st.session_state.worst_responses_num]
     }
 
@@ -53,7 +53,13 @@ def save_record():
 
     with open(file_path, 'w', encoding='utf-8') as f:
         json.dump(record, f, ensure_ascii=False, indent=2)
-    
+
+    st.session_state.current_dialogs.append(
+        {
+            "role": "assistant",
+            "content": st.session_state[f"response_{st.session_state.best_responses_num}"]
+        }
+    )
     st.session_state.best_responses_num = 0
     st.session_state.worst_responses_num = 0
 
@@ -108,7 +114,7 @@ with select:
             with st.chat_message(dialog["role"], avatar=avatar):
                 st.write(dialog["content"])
     
-    text_input, send_button = st.columns([9, 1])
+    text_input, send_button, clear_button = st.columns([8, 1, 1])
     with text_input:
         prompt = st.text_input(
             "Message",
@@ -121,10 +127,22 @@ with select:
             type="primary",
             use_container_width=True
             )
+    with clear_button:
+        st.button(
+            "Clear",
+            on_click=lambda: st.session_state.current_dialogs.clear(),
+            type="secondary",
+            use_container_width=True
+        )
 
 with outputs:
     with st.container(height=780, border=True):
         for i, response in enumerate(st.session_state.model_outputs):
             st.write(f"#### {i}")
             with st.chat_message("assistant", avatar=st.session_state.assistant_icon):
-                st.write(response)
+                st.text_area(
+                    "attr",
+                    response,
+                    key=f"response_{i}",
+                    label_visibility="collapsed"
+                )
