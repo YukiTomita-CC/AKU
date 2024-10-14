@@ -26,19 +26,21 @@ st.markdown(CHAT_MESSAGE_STYLE, unsafe_allow_html=True)
 def send_message():
     role = "user" if len(st.session_state.current_dialogs) % 2 == 0 else "assistant"
     
-    st.session_state.current_dialogs.append({"role": role, "content": st.session_state.input_message})
+    st.session_state.current_dialogs.append({"role": role, "content": _normalize_text(st.session_state.input_message)})
     st.session_state.input_message = ""
 
-    outputs = st.session_state.inference_model.generate_responses(st.session_state.current_dialogs)
+    outputs = st.session_state.inference_model.generate_responses(st.session_state.current_dialogs[-10:])
     st.session_state.model_outputs = outputs
 
 def save_record():
     if st.session_state.best_responses_num == st.session_state.worst_responses_num:
         return
     
+    chosen_response = _normalize_text(st.session_state[f"response_{st.session_state.best_responses_num}"])
+    
     record = {
-        "input": st.session_state.current_dialogs,
-        "chosen": st.session_state[f"response_{st.session_state.best_responses_num}"],
+        "input": st.session_state.current_dialogs[-10:],
+        "chosen": chosen_response,
         "rejected": st.session_state.model_outputs[st.session_state.worst_responses_num]
     }
 
@@ -57,11 +59,19 @@ def save_record():
     st.session_state.current_dialogs.append(
         {
             "role": "assistant",
-            "content": st.session_state[f"response_{st.session_state.best_responses_num}"]
+            "content": chosen_response
         }
     )
     st.session_state.best_responses_num = 0
     st.session_state.worst_responses_num = 0
+    st.session_state.model_outputs = []
+
+def get_dataset_num():
+    base_dir = 'aku/fine_tuning/dpo_data'
+    return len([name for name in os.listdir(base_dir) if os.path.isfile(os.path.join(base_dir, name))])
+
+def _normalize_text(text: str) -> str:
+    return text.replace("？", "?").replace("！", "!")
 
 
 # ===== State =====
@@ -89,24 +99,31 @@ if 'assistant_icon' not in st.session_state:
 select, outputs = st.columns(2)
 
 with select:
-    with st.container(height=250, border=True):
-        st.radio(
-            "Select Best Responses",
-            range(10),
-            key="best_responses_num",
-            horizontal=True,
-        )
-        st.radio(
-            "Select Worst Responses",
-            range(10),
-            key="worst_responses_num",
-            horizontal=True,
-        )
-        st.button(
-            "Save",
-            on_click=save_record,
-            type="primary",
-        )
+    col1, col2 = st.columns([7, 4])
+    with col1:
+        with st.container(height=250, border=True):
+            st.radio(
+                "Select Best Responses",
+                range(10),
+                key="best_responses_num",
+                horizontal=True,
+            )
+            st.radio(
+                "Select Worst Responses",
+                range(10),
+                key="worst_responses_num",
+                horizontal=True,
+            )
+            st.button(
+                "Save",
+                on_click=save_record,
+                type="primary",
+            )
+    with col2:
+        with st.container(height=250, border=True):
+            st.write("#### Summary")
+            st.write(f"- Dataset Num: {get_dataset_num()} / 500 ({get_dataset_num() / 500 * 100:.2f}%)")
+            st.write(f"- Dialog Num: {len(st.session_state.current_dialogs) // 2} turns")
 
     with st.container(height=450, border=True):
         for i, dialog in enumerate(st.session_state.current_dialogs):
